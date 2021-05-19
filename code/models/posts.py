@@ -42,5 +42,5 @@ class Comment( db.Model ):
 
     comment = db.Column( db.String( 200 ), nullable = False )
 
-    date_liked = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
+    date_commented = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
 

@@ -12,3 +12,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( "DB_URL" )
 
 api = Api( app )
 db = SQLAlchemy( app )
+
+from .models.posts import *
+from .models.users import *
+
+# db.create_all()

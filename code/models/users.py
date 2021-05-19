@@ -25,7 +25,7 @@ class Pin( db.Model ):
 
     pid = db.Column( db.Integer, db.ForeignKey('post.id'), nullable = False )
 
-    date_liked = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
+    date_pinned = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
 
 class Auth( db.Model ):
     id = db.Column( db.Integer, primary_key = True, nullable = False )
