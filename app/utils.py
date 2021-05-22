@@ -1,20 +1,25 @@
-import base64
-from .exceptions import InvalidTokenException
 import os, sys
-import time, random
-import datetime
 import hashlib
+from cryptography.fernet import Fernet
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+key = os.getenv( "FERNET_SECRET" )
 
 def encrypt( s ):
-    return s
+    key = os.getenv( "FERNET_SECRET" )
+
+    return Fernet( key ).encrypt( s.encode() ).decode()
 
 def decrypt( s ):
-    return s
+    key = os.getenv( "FERNET_SECRET" )
+
+    return Fernet( key ).decrypt( s.encode() ).decode()
 
 def generate_key( l = 8 ):
-    s = ''.join( ( chr(random.randint( 49, 127 )) for _ in range( l ) ) )
-
-    return s
+    return Fernet.generate_key().decode()
 
 def hash_data( s, key, algol = 'md5' ):
     hashed = hashlib.md5()

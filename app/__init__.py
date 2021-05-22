@@ -8,7 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv( "DB_URL" )
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get( "DB_URL" )
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# print( "db - ", os.getenv( "DB_URL" ) )
 
 api = Api( app )
 db = SQLAlchemy( app )
@@ -21,8 +24,10 @@ from .models.auth import *
 
 from .resources.authentication import Authenticator
 from .resources.users import Users as UsersResource
+from .resources.posts import Posts as PostsResource
 
 api.add_resource( Authenticator, "/auth" )
 api.add_resource( UsersResource, "/users/<int:uid>" )
+api.add_resource( PostsResource, "/posts" )
 
 api.init_app( app )
