@@ -18,4 +18,8 @@ class PostNotFoundException( Exception ):
 
 class UserNotSetupException( Exception ):
     def __str__(self) -> str:
-        return "user %s ha not been setup" % super().__str__()
+        return "user %s has not been setup" % super().__str__()
+
+class CommentNotFoundException( Exception ):
+    def __str__(self) -> str:
+        return "comment %s not found" % super().__str__()

@@ -1,4 +1,4 @@
-from app.exceptions import PostNotFoundException
+from app.exceptions import CommentNotFoundException, PostNotFoundException
 import datetime
 from .. import db
 
@@ -76,6 +76,28 @@ class Like( db.Model ):
 
     date_liked = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
 
+    @staticmethod
+    def like( uid, pid ):
+        _like = Like.query.filter_by( uid = uid, pid = pid ).first()
+
+        if _like is None:
+            _like = Like( uid = uid, pid = pid )
+
+            db.session.add( _like )
+            db.session.commit()
+
+        return _like
+    
+    @staticmethod
+    def unlike( uid, pid ):
+        _like = Like.query.filter_by( uid = uid, pid = pid ).first()
+
+        if _like is not None:
+            db.session.delete( _like ) 
+            db.session.commit()
+
+        return _like
+
 class Comment( db.Model ):
 
     id = db.Column( db.Integer, primary_key = True, autoincrement = True )
@@ -87,3 +109,22 @@ class Comment( db.Model ):
 
     date_commented = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
 
+    @staticmethod
+    def add_comment( uid, pid, comment ):
+        _comment = Comment( uid = uid, pid = pid, comment = comment )
+
+        db.session.add( _comment )
+        db.session.commit()
+
+        return _comment
+    
+    @staticmethod
+    def delete_comment( uid, pid, id ):
+        _comment = Comment.query.filter_by( uid = uid, pid = pid, id = id ).first()
+        if _comment is None:
+            raise CommentNotFoundException( f"{id} by {uid}" )
+
+        db.session.delete( _comment )
+        db.session.commit()
+
+        return _comment

@@ -26,10 +26,14 @@ from .resources.authentication import Authenticator
 from .resources.users import Users as UsersResource
 from .resources.posts import Posts as PostsResource
 from .resources.pins import Pins as PinsResource
+from .resources.comments import Comments as CommentsResource
+from .resources.likes import Likes as LikesResource
 
 api.add_resource( Authenticator, "/auth" )
 api.add_resource( UsersResource, "/users" )
 api.add_resource( PostsResource, "/posts" )
 api.add_resource( PinsResource, "/pins" )
+api.add_resource( CommentsResource, "/comments/<int:pid>" )
+api.add_resource( LikesResource, "/likes/<int:pid>" )
 
 api.init_app( app )
