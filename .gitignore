@@ -2,4 +2,5 @@ env/
 .vscode/
 app/.env
 app/database.db
-app/__pycache__
+app/__pycache__/
+run.py
