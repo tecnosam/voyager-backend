@@ -5,7 +5,7 @@ from .. import db
 
 class User( db.Model ):
 
-    id = db.Column( db.Integer, primary_key = True, auto_incremenet = True )
+    id = db.Column( db.Integer, primary_key = True, autoincrement = True )
     uid = db.Column( db.String( 500 ), unique = True, nullable = False )
 
     name = db.Column( db.String( 100 ), nullable = False )
@@ -37,17 +37,17 @@ class User( db.Model ):
     @staticmethod
     def fetch_data( uid, isolate = False ):
 
-        _user = User.query.filter_by( User.uid == uid ).first()
+        _user = User.query.filter_by( uid = uid ).first()
 
         if not isolate:
 
             if _user.show_pins:
 
-                _user.pins = Pin.query.filter_by( Pin.uid == uid ).all()
+                _user.pins = Pin.query.filter_by( uid = uid ).all()
 
             if _user.show_timeline:
 
-                _user.timeline = Post.query.filter_by( Post.uid == uid ).all()
+                _user.timeline = Post.query.filter_by( uid = uid ).all()
 
         return _user
 
@@ -56,7 +56,7 @@ class User( db.Model ):
     def update_data( uid, name = None, bio = None ):
         _user = User.fetch_data( uid, isolate = True )
         if _user is None:
-            return 
+            raise UserNotFoundException( uid )
         
         if name is not None:
             _user.name = name
@@ -74,8 +74,8 @@ class User( db.Model ):
         _user = User.fetch_data( uid, isolate = True )
 
         if _user is None:
-            raise UserNotFoundException( f"user {uid} does not exist" )
-        
+            raise UserNotFoundException( uid )
+
         db.session.delete( _user )
 
         db.session.commit()
@@ -85,10 +85,38 @@ class User( db.Model ):
 
 class Pin( db.Model ):
 
-    id = db.Column( db.Integer, primary_key = True, auto_increment = True )
+    id = db.Column( db.Integer, primary_key = True, autoincrement = True )
 
     uid = db.Column( db.String( 500 ), db.ForeignKey('user.uid'), nullable = False )
 
     pid = db.Column( db.Integer, db.ForeignKey('post.id'), nullable = False )
 
     date_pinned = db.Column( db.DateTime(40), default = datetime.datetime.utcnow() )
+
+    def add_pin( uid: str, pid: int ) -> Post:
+        _pin = Pin.query.filter_by( uid = uid, pid = pid ).first()
+        if _pin is None:
+            _pin = Pin( uid = uid, pid = pid )
+
+            db.session.add( _pin )
+            db.session.commit()
+
+        return Post.query.get( pid )
+    
+    @staticmethod
+    def remove_pin( uid, pid ):
+        _pins = Pin.query.filter_by( uid = uid, pid = pid ).all()
+
+        for _pin in _pins:
+            db.session.delete( _pin )
+
+        db.session.commit()
+
+        return Post.query.get( pid )
+
+    @staticmethod
+    def fetch_pins( uid ):
+
+        posts = db.session.query( Pin ).filter_by( uid = uid ).join( Post ).all()
+
+        return posts

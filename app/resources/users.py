@@ -19,9 +19,13 @@ user_args.add_argument( 'name', type = str, help = "Your full name" )
 user_args.add_argument( 'bio', default = "Hi there!", type = str, help="Users bio" )
 
 class Users(Resource):
-    
+
     @marshal_with( user_fields )
-    def get( self, uid ):
+    def get( self ):
+
+        uid = request.headers.get('uid')
+        if uid is None:
+            abort( 403 )
 
         user = User.fetch_data( uid )
 
@@ -31,9 +35,12 @@ class Users(Resource):
         return user
     
     # @marshal_with( user_fields )
-    def post( self, uid ):
+    def post( self ):
 
         ip_address = request.remote_addr
+        uid = request.headers.get('uid')
+        if uid is None:
+            abort( 403 )
 
         token = request.headers.get( 'token' )
         try:
@@ -54,12 +61,16 @@ class Users(Resource):
             headers={ 'new-token': new_token[1] }
         )
 
-    def put( self, uid ):
+    def put( self ):
         ip_address = request.remote_addr
+
+        uid = request.headers.get('uid')
+        if uid is None:
+            abort( 403 )
 
         token = request.headers.get( 'token' )
         try:
-            new_token = Token.validate_token( token, uid, ip_address )
+            new_token = Token.validate_token( token, uid, ip_address, False )
         except InvalidTokenException as e:
 
             abort( Response( str(e), 400 ) )
@@ -69,22 +80,27 @@ class Users(Resource):
 
         payload = user_args.parse_args( strict = True )
 
-        _user = User.update_data( uid, **payload )
+        try:
+            _user = User.update_data( uid, **payload )
+        except UserNotFoundException as e:
+            abort( Response( str(e), 404 ) )
 
         return Response( 
             marshal( _user, user_fields ),
             headers={ 'new-token': new_token[1] }
         )
     
-    def delete( self, uid ):
+    def delete( self ):
         ip_address = request.remote_addr
+        uid = request.headers.get('uid')
+        if uid is None:
+            abort( 403 )
 
         token = request.headers.get( 'token' )
 
         try:
             new_token = Token.validate_token( token, uid, ip_address )
         except InvalidTokenException as e:
-
             abort( Response( str(e), 400 ) )
 
         if not ( new_token[0] ):

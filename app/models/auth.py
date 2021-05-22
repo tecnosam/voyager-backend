@@ -1,14 +1,14 @@
 import datetime
 from .. import db
 
-from ..exceptions import InvalidTokenException
+from ..exceptions import InvalidTokenException, UserExistsException
 from ..utils import encrypt, decrypt, generate_key, hash_data
 
 import sys, os, time
-
+import sqlalchemy
 
 class Auth( db.Model ):
-    id = db.Column( db.Integer, primary_key = True, nullable = False )
+    id = db.Column( db.String( 200 ), primary_key = True, nullable = False )
 
     email = db.Column( db.String( 200 ), unique = True, nullable = False )
 
@@ -24,23 +24,29 @@ class Auth( db.Model ):
     @staticmethod
     def add_user( email, pwd ):
 
-        key = encrypt(generate_key( 16 ))
+        key = generate_key(  )
 
         _pwd = hash_data( pwd, key )
 
-        _auth = Auth( email = email, pwd = _pwd, key = key )
+        _auth = Auth( email = email, pwd = _pwd, key = encrypt(key) )
 
-        db.session.add( _auth )
-        db.session.commit()
+        print( _auth.email )
+
+        _auth.id = encrypt( f"user-{_auth.email}-{time.time()}" )
+        try:
+            db.session.add( _auth )
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            raise UserExistsException( email )
 
         return _auth
-    
+
     @staticmethod
     def authenticate( email, pwd, ip_address ):
-        _auth = Auth.query.filter_by( Auth.email == email ).first()
+        _auth = Auth.query.filter_by( email = email ).first()
         if ( _auth is None ):
             return False, "Email not found"
-        
+
         _pwd = hash_data( pwd, decrypt(_auth.key) )
 
         if ( _auth.pwd != _pwd ):
@@ -77,7 +83,7 @@ class Token( db.Model ):
     @staticmethod
     def generate_token( uid, ip_address, expires = 3 ):
 
-        data = f"token-{uid}-{ip_address}-{time.time() + expires*86400}-renewable"
+        data = f"token\t{uid}\t{ip_address}\t{time.time() + expires*86400}\trenewable"
 
         token = encrypt( data )
 
@@ -87,16 +93,18 @@ class Token( db.Model ):
         return None
 
     @staticmethod
-    def validate_token( token, uid, ip_address ):
+    def validate_token( token, uid, ip_address, refresh_now = True ):
         try:
             data = decrypt( token )
-            data = data.split( "-" )
+            print( "decrypted - ", data )
+            data = data.split( "\t" )
             if len(data) < 5:
                 raise InvalidTokenException( "Token is either corrupted or incomplete" )
         except Exception as e:
             raise InvalidTokenException( str( e ) )
         
         if data[2] != ip_address:
+            print( "tokens ip: ", data )
             return False, "This device doesn't have a session."
 
         if data[1] != uid:
@@ -115,7 +123,7 @@ class Token( db.Model ):
 
             raise InvalidTokenException( "Token has expired" )
 
-        if data[4] == 'renewable':
+        if (refresh_now and (data[4] == 'renewable')):
 
             new_token = Token.generate_token( data[1], ip_address )
 
@@ -123,5 +131,8 @@ class Token( db.Model ):
             db.session.commit()
 
             return True, new_token
+        else:
+            _token.last_used = datetime.datetime.utcnow()
+            db.session.commit()
 
         return True, data[1], token # status, uid and token

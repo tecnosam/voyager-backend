@@ -1,14 +1,15 @@
+from app.exceptions import PostNotFoundException
 import datetime
 from .. import db
 
 class Post( db.Model ):
 
-    id = db.Column( db.Integer, primary_key = True, auto_incremenet = True )
+    id = db.Column( db.Integer, primary_key = True, autoincrement = True )
     uid = db.Column( db.String( 500 ), db.ForeignKey('user.id'), nullable = False )
 
     # media is boolean. the media path = {storagepath}/{id}-{uid}.{ext}
     # allowed extensions are mp4, png, jpg, jpeg
-    media = db.Column( db.Boolean, unique = True, nullable = False )
+    media = db.Column( db.Boolean, default = False, nullable = False )
     caption = db.Column( db.String( 500 ), nullable = True )
 
     # location of post = {latitude},{longitude}
@@ -24,9 +25,51 @@ class Post( db.Model ):
 
     pins = db.relationship( 'Pin', backref = 'post', lazy = True )
 
+    @staticmethod
+    def add_post( uid, location, media = False, caption = None, allow_comments = True ):
+        if (( not media ) and (caption is None)):
+            return False, "Empty post"
+
+        post = Post( uid = uid, location = location,
+             media = media, caption = caption, allow_comments = allow_comments )
+        db.session.add( post )
+        db.session.commit()
+
+        return post
+    
+    @staticmethod
+    def edit_post( uid, pid, caption = None, allow_comments = None ):
+
+        _post = Post.query.filter_by( uid = uid, id = pid ).first()
+
+        if _post is None:
+            raise PostNotFoundException( pid )
+        
+        if caption is not None:
+            _post.caption = caption
+
+        if allow_comments is not None:
+            _post.allow_comments = allow_comments
+
+        db.session.commit()
+
+        return _post
+    
+    @staticmethod
+    def delete_post( uid, pid ):
+        _post = Post.query.filter_by( uid = uid, id = pid ).first()
+
+        if _post is None:
+            raise PostNotFoundException( pid )
+        
+        db.session.delete( _post )
+        db.session.commit()
+
+        return _post
+
 class Like( db.Model ):
 
-    id = db.Column( db.Integer, primary_key = True, auto_increment = True )
+    id = db.Column( db.Integer, primary_key = True, autoincrement = True )
 
     uid = db.Column( db.String( 500 ), nullable = False )
     pid = db.Column( db.Integer, db.ForeignKey('post.id'), nullable = False )
@@ -35,7 +78,7 @@ class Like( db.Model ):
 
 class Comment( db.Model ):
 
-    id = db.Column( db.Integer, primary_key = True, auto_increment = True )
+    id = db.Column( db.Integer, primary_key = True, autoincrement = True )
 
     uid = db.Column( db.String( 500 ), nullable = False )
     pid = db.Column( db.Integer, db.ForeignKey('post.id'), nullable = False )

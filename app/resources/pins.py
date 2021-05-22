@@ -1,13 +1,23 @@
+from typing import Type
 from app.exceptions import InvalidTokenException
 from app.models.auth import Token
-from flask_restful import Resource, marshal, reqparse, fields, marshal_with
+from flask_restful import Resource, marshal, fields, marshal_with
 from .posts import post_fields
 from ..models.users import Pin
 
 from flask import abort, request, Response
 
 
+pins_field = {
+    "id": fields.Integer,
+    "pid": fields.Integer,
+    "post": post_fields,
+    "date_pinned": fields.DateTime
+}
+
 class Pins( Resource ):
+
+    @marshal_with( pins_field )
     def get( self ):
         uid = request.headers.get('uid')
         if uid is None:
@@ -33,7 +43,13 @@ class Pins( Resource ):
         if uid is None:
             abort( 403 )
 
-        pid = request.args.get( "pid" ) # post id
+        try:
+            pid = request.args.get( "pid" ) # post id
+            if pid is None:
+                raise TypeError
+        except TypeError:
+            abort( Response( "Post ID is missing", 403 ) )
+
 
         ip_address = request.remote_addr
 
@@ -54,7 +70,12 @@ class Pins( Resource ):
         if uid is None:
             abort( 403 )
 
-        pid = request.args.get( "pid" ) # post id
+        try:
+            pid = request.args.get( "pid" ) # post id
+            if pid is None:
+                raise TypeError
+        except TypeError:
+            abort( Response( "Post ID is missing", 403 ) )
 
         ip_address = request.remote_addr # users ip address
 
