@@ -15,3 +15,7 @@ class UserExistsException( Exception ):
 class PostNotFoundException( Exception ):
     def __str__(self) -> str:
         return "post %s does not exist" % super().__str__()
+
+class UserNotSetupException( Exception ):
+    def __str__(self) -> str:
+        return "user %s ha not been setup" % super().__str__()

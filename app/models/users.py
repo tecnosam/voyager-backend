@@ -1,4 +1,4 @@
-from ..exceptions import UserNotFoundException
+from ..exceptions import UserNotFoundException, UserNotSetupException
 from .posts import Post
 import datetime
 from .. import db
@@ -39,13 +39,21 @@ class User( db.Model ):
 
         _user = User.query.filter_by( uid = uid ).first()
 
+        if _user is None:
+            raise UserNotSetupException( uid )
+
         if not isolate:
 
             if _user.show_pins:
 
-                _user.pins = Pin.query.filter_by( uid = uid ).all()
+                _user.pins = Pin.fetch_pins( uid )
+                print( _user.pins )
+                # if type(_user.pins) == Pin:
+                #     _user.pins = []
 
             if _user.show_timeline:
+
+                print( "timeline", _user.timeline )
 
                 _user.timeline = Post.query.filter_by( uid = uid ).all()
 
@@ -53,7 +61,7 @@ class User( db.Model ):
 
     # this will require token
     @staticmethod
-    def update_data( uid, name = None, bio = None ):
+    def update_data( uid, name = None, bio = None, show_pins = None, show_timeline = None ):
         _user = User.fetch_data( uid, isolate = True )
         if _user is None:
             raise UserNotFoundException( uid )
@@ -62,7 +70,11 @@ class User( db.Model ):
             _user.name = name
         if bio is not None:
             _user.bio = bio
-        
+        if show_pins is not None:
+            _user.show_pins = bool( show_pins )
+        if show_timeline is not None:
+            _user.show_timeline = bool( show_timeline )
+
         # db.session.add( _user )
         db.session.commit()
 

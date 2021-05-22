@@ -22,7 +22,7 @@ post_args = reqparse.RequestParser()
 post_args.add_argument( "location", type = str, required = True, help = "lat,long coord of post" )
 post_args.add_argument( "media", type = int, help = "is there a media file (1/0)" )
 post_args.add_argument( "caption", type = str, help = "Post caption" )
-post_args.add_argument( "allow_comments", type = int, help = "Allow users to add comments" )
+post_args.add_argument( "allow_comments", default = 1, type = int, help = "Allow users to add comments" )
 
 edit_post_args = reqparse.RequestParser()
 # edit_post_args.add_argument( "uid", type = str, required = True, help="User ID is missing" )
@@ -65,11 +65,23 @@ class Posts( Resource ):
         if 'allow_comments' in payload:
             print( payload['allow_comments'] )
 
-            payload['allow_comments'] = payload['allow_comments'] == 1
+            if payload['allow_comments'] is not None:
+
+                payload['allow_comments'] = payload['allow_comments'] == 1
+            
+            else:
+
+                payload.pop( 'allow_comments' )
         
         if 'media' in payload:
+            if payload['media'] is not None:
 
-            payload['media'] = payload[ 'media' ] == 1
+                payload['media'] = payload[ 'media' ] == 1
+            
+            else:
+
+                payload.pop( 'media' )
+
 
         _post = Post.add_post( uid = uid, **payload )
 

@@ -11,7 +11,7 @@ from flask import abort, request, Response
 pins_field = {
     "id": fields.Integer,
     "pid": fields.Integer,
-    "post": post_fields,
+    "post": fields.Nested(post_fields),
     "date_pinned": fields.DateTime
 }
 
@@ -33,7 +33,7 @@ class Pins( Resource ):
             abort( Response( str(e), 400 ) )
 
         if not ( new_token[0] ):
-            abort( Response( str(e), 403 ) )
+            abort( Response( new_token[1], 403 ) )
 
         return Pin.fetch_pins( uid )
     
@@ -61,7 +61,7 @@ class Pins( Resource ):
             abort( Response( str(e), 400 ) )
 
         if not ( new_token[0] ):
-            abort( Response( str(e), 403 ) )
+            abort( Response( new_token[1], 403 ) )
         
         return marshal( Pin.add_pin( uid, pid ), post_fields )
     
@@ -88,7 +88,7 @@ class Pins( Resource ):
             abort( Response( str(e), 400 ) )
 
         if not ( new_token[0] ):
-            abort( Response( str(e), 403 ) )
+            abort( Response( new_token[1], 403 ) )
         # end of validate token
 
         return marshal( Pin.remove_pin( uid, pid ), post_fields )
