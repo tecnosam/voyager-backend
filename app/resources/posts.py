@@ -2,8 +2,11 @@ from app.exceptions import InvalidTokenException, PostNotFoundException, UserNot
 from app.models.auth import Token
 from flask_restful import Resource, reqparse, fields, marshal_with
 from flask import abort, Response, request
+from app import db
+from ..models.posts import Comment, Like, Post
 
-from ..models.posts import Post
+from .likes import likes_fields
+from .comments import comment_fields
 
 post_fields = {
     "id": fields.Integer,
@@ -13,8 +16,8 @@ post_fields = {
     "location": fields.String,
     "allow_comments": fields.Boolean,
     "date_posted": fields.DateTime,
-    # "likes": likes_fields
-    # "comments": comment_fields
+    "likes": fields.Nested(likes_fields),
+    "comments": fields.Nested(comment_fields)
 }
 
 post_args = reqparse.RequestParser()
@@ -34,8 +37,10 @@ class Posts( Resource ):
     
     @marshal_with( post_fields )
     def get( self ):
-        posts = Post.query.all()
-        # TODO: add comment count and likes count
+        posts = db.session.query( Post ).join( 
+            Like.query.filter_by( pid = Post.id ), 
+            Comment.query.filter_by( pid = Post.id ) 
+        ).all()
         # TODO: add location filter
 
         return posts
