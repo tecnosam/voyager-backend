@@ -25,9 +25,11 @@ from .models.auth import *
 from .resources.authentication import Authenticator
 from .resources.users import Users as UsersResource
 from .resources.posts import Posts as PostsResource
+from .resources.pins import Pins as PinsResource
 
 api.add_resource( Authenticator, "/auth" )
-api.add_resource( UsersResource, "/users/<int:uid>" )
+api.add_resource( UsersResource, "/users" )
 api.add_resource( PostsResource, "/posts" )
+api.add_resource( PinsResource, "/pins" )
 
 api.init_app( app )
