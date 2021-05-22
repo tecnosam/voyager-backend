@@ -47,7 +47,6 @@ class Likes(Resource):
     @marshal_with( likes_fields )
     def delete( self, pid ):
         uid = request.headers.get( "uid" )
-        _id = request.args['id']
 
         if uid is None:
             abort( 403 )
