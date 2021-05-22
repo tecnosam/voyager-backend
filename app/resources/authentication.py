@@ -1,3 +1,4 @@
+from app.exceptions import UserExistsException
 from ..models.auth import Auth
 
 from flask_restful import Resource, reqparse
@@ -23,6 +24,13 @@ class Authenticator( Resource ):
         
         return { "token": auth[1] }
     
+    def put( self ):
+        payload = auth_args.parse_args()
+        try:
+            return {"status": Auth.add_user( **payload ) is not None}
+        except UserExistsException as e:
+            abort( Response( str(e), 400 ) )
+
     def delete( self ):
         # this endpoint deletes token not authenticator
         pass
