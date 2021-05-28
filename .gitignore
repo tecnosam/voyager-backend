@@ -1,6 +1,6 @@
 env/
 .vscode/
-app/.env
+.env
 app/database.db
 app/__pycache__/
 run.py
