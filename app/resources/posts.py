@@ -1,9 +1,10 @@
-from app.exceptions import InvalidTokenException, PostNotFoundException, UserNotFoundException
-from app.models.auth import Token
+from ..exceptions import InvalidTokenException, PostNotFoundException, UserNotFoundException
+from ..models.auth import Token
 from flask_restful import Resource, reqparse, fields, marshal_with
 from flask import abort, Response, request
-from app import db
+from .. import db
 from ..models.posts import Comment, Like, Post
+from ..utils import haversine
 
 from .likes import likes_fields
 from .comments import comment_fields
@@ -37,16 +38,20 @@ class Posts( Resource ):
     
     @marshal_with( post_fields )
     def get( self ):
-        posts = db.session.query( Post ).join( 
-            Like.query.filter_by( pid = Post.id ), 
+        posts = db.session.query( Post ).outerjoin( 
+            Like.query.filter_by( pid = Post.id ),
             Comment.query.filter_by( pid = Post.id ) 
-        ).all()
-        # TODO: add location filter
+        )
 
-        return posts
+        if 'dfa' in request.args:
+            dfa = float(request.args[ 'dfa' ])
+            posts = posts.filter( (Post.location - dfa) <= 20 )
+
+        return posts.all()
 
     @marshal_with( post_fields )
     def post( self ):
+        # modify to calculate the distance from the equator and store in location
         payload = post_args.parse_args(  )
         uid = request.headers.get('uid')
         if uid is None:
@@ -66,6 +71,8 @@ class Posts( Resource ):
         except InvalidTokenException:
 
             abort( Response( "token is invalid", 403 ) )
+        
+        payload['location'] = haversine( payload['location'] )
         
         if 'allow_comments' in payload:
             print( payload['allow_comments'] )
@@ -91,6 +98,7 @@ class Posts( Resource ):
         _post = Post.add_post( uid = uid, **payload )
 
         # todo: if media is true upload media file to cdn
+
 
         return _post
     

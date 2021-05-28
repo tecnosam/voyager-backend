@@ -12,8 +12,8 @@ class Post( db.Model ):
     media = db.Column( db.Boolean, default = False, nullable = False )
     caption = db.Column( db.String( 500 ), nullable = True )
 
-    # location of post = {latitude},{longitude}
-    location = db.Column( db.String( 500 ), nullable = False )
+    # harvesine distance from the equator
+    location = db.Column( db.Integer, nullable = False )
 
     allow_comments = db.Column( db.Boolean, default = True, nullable = False )
 
