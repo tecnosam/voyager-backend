@@ -20,7 +20,7 @@ from .models.posts import *
 from .models.users import *
 from .models.auth import *
 
-# db.create_all()
+db.create_all()
 
 from .resources.authentication import Authenticator
 from .resources.users import Users as UsersResource
